@@ -1,8 +1,10 @@
 /*
- * nfq_proc.h
- *
- *  Created on: Oct 20, 2013
- *      Author: solitaryx88
+ ============================================================================
+ Name        : nfq_proc.h
+ Author      : Charalampos Mysirlidis
+ Copyright   : GPLv3
+ Description : The packet analysis process out of the NFQueue in C, Ansi-style
+ ============================================================================
  */
 
 #ifndef NFQ_PROC_H_
@@ -20,13 +22,6 @@
 
 #include "global.h"
 
-extern int logging_level;
-extern int queue_num;
-
-
-char nfqp_command[COMMAND_LEN];
-
-
 
 static u_int32_t nfqp_print_pkt (struct nfq_data *tb);
 
@@ -37,19 +32,12 @@ int nfqp_set_queue(int queue_num);
 void nfqp_log_msg(char *msg);
 
 int nfqp_init();
+
 int nfqp_exit();
 
 int nfqp_analyzer_function(void *args);
 
-
 void nfqp_test_logging(void);
-
-
-
-
-
-
-
 
 
 #endif /* NFQ_PROC_H_ */

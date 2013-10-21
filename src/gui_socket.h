@@ -1,8 +1,10 @@
 /*
- * Socket.h
- *
- *  Created on: Oct 13, 2013
- *      Author: solitaryx88
+ ============================================================================
+ Name        : gui_socket.h
+ Author      : Charalampos Mysirlidis
+ Copyright   : GPLv3
+ Description : Socket connection for the Java/GUI app.
+ ============================================================================
  */
 
 #ifndef SOCKET_H_

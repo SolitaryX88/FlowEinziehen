@@ -1,3 +1,13 @@
+/*
+ ============================================================================
+ Name        : gui_socket.c
+ Author      : Charalampos Mysirlidis
+ Copyright   : GPLv3
+ Description : Socket connection for the Java/GUI app.
+ ============================================================================
+ */
+
+
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>

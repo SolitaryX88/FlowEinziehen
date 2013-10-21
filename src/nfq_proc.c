@@ -7,7 +7,17 @@
  ============================================================================
  */
 
+/*
+ *	Part of the code is from https://github.com/jvehent/nfqueue_recorder
+ */
+
 #include "nfq_proc.h"
+
+extern int logging_level;
+extern int queue_num;
+
+
+char nfqp_command[COMMAND_LEN];
 
 
 int use_pcap = 0;
@@ -259,7 +269,7 @@ int nfqp_analyzer_function(void *args)
     if(nfqp_dbg>2)
     	printf("binding this socket to queue '0'\n");
 
-    qh = nfq_create_queue(h,  0, &nfqp_cb, NULL);
+    qh = nfq_create_queue(h,  queue_num, &nfqp_cb, NULL);
     if (!qh) {
         fprintf(stderr, "error during nfq_create_queue()\n");
         exit(EXIT_FAILURE);
