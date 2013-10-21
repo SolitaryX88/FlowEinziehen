@@ -41,11 +41,11 @@ typedef struct _pkt_stat_min_t {
 
 enum {critical=1, error, info, debug};
 
+int glb_init();
+
+void glb_exit();
 
 
 
-/*
-
-*/
 
 #endif /* GLOBALVAR_H_ */

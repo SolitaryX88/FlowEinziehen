@@ -7,28 +7,17 @@
  ============================================================================
  */
 
-
-#include "packet_analyzer.h"
-
 #include "global.h"
-#include "config_xml.h"
-#include "gui_socket.h"
-#include "nfq_proc.h"
-
-
-#include <linux/ip.h>
-
-//#include "Socket.h"
-
+#include "packet_analyzer.h"
+#include <signal.h>
 
 
 int main(int argc, char **argv) {
 
-	nfqp_init();
+	signal(SIGINT, signal_handler);
 
-	nfqp_test_logging();
 
-	nfqp_exit();
+
 //
 //	int arguments;
 //
@@ -62,9 +51,13 @@ int main(int argc, char **argv) {
 	/** Read configure file */
 
 
-
 	/** Initialize NFQUEUE forwarding process, logging files e.t.c */
-	//nfqp_init();
+
+	if(!nfqp_init() || !glb_init()){
+		exit(EXIT_FAILURE);
+	}
+
+	nfqp_analyzer_function();
 
 
 
@@ -72,3 +65,11 @@ int main(int argc, char **argv) {
 	return(EXIT_SUCCESS);
 
 }
+
+
+
+void signal_handler() {
+	    nfqp_exit();
+	    exit(EXIT_FAILURE);
+}
+

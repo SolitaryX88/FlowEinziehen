@@ -10,13 +10,25 @@
 
 #include "global.h"
 
-#include "config_xml.h"
-#include "gui_socket.h"
-#include "nfq_proc.h"
-#include "packet_analyzer.h"
+FILE *glb_log_file;
+char *glb_log_fpath = "../logs/global.log";
 
-int logging_level = 3;
-int queue_num = 0;
+int glb_init(){
+
+	glb_log_file = fopen(glb_log_fpath, "w");
+
+	if(glb_log_file==NULL){
+		printf("Error while opening Global log file!\n");
+		return(FAIL);
+	}
+
+	return(SUCCESS);
+}
+
+void glb_exit(){
+
+
+}
 
 
 char *ip_proto_name[150] = { "HOPOPT", "ICMP", "IGMP", "GGP", "IPv4", "ST",

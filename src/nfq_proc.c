@@ -12,13 +12,17 @@
  */
 
 #include "nfq_proc.h"
+#include "global.h"
 
-extern int logging_level;
-extern int queue_num;
+
+int logging_level = 4;
+int queue_num = 0;
+
+char *nfqp_log_fpath = "../logs/nfqp.log";
+
 
 
 char nfqp_command[COMMAND_LEN];
-
 
 int use_pcap = 0;
 FILE *nfqp_log_file;
@@ -195,8 +199,9 @@ void nfqp_log(int log_lvl, char *msg){
 	char log[MAX_LOG_MSG];
 
 	if ((logging_level - log_lvl) + 1) {
-		snprintf(log, MAX_LOG_MSG, "%.*s", strlen(msg), msg);
+		snprintf(log, MAX_LOG_MSG, "%.*s", (int)strlen(msg), msg);
 		fputs(log, nfqp_log_file);
+
 	}
 
 }
@@ -204,17 +209,26 @@ void nfqp_log(int log_lvl, char *msg){
 
 int nfqp_init(){
 
-	nfqp_log_file = fopen("../logs/nfqp.txt","w");
-	//nfqp_set_queue(queue_num);
+	nfqp_log_file = fopen(nfqp_log_fpath,"w");
+
+	if(nfqp_log_file==NULL){
+		printf("Error while opening nfqp_log_file! \n");
+		return(FAIL);
+	}
+
+	nfqp_log(info, "Deleting previous iptables\n");
+	system("iptables -F");
+
+	nfqp_log(info, "Setup the queue of the iptables\n");
+	nfqp_set_queue(queue_num);
 
 	return(SUCCESS);
 }
 
 int nfqp_exit(){
 
-
 	fclose(nfqp_log_file);
-	//system("iptables -F");
+	system("iptables -F");
 
 	return(SUCCESS);
 
@@ -238,47 +252,38 @@ int nfqp_analyzer_function(void *args)
     int rv;
     char buf[BUFSIZE];
 
-    int nfqp_dbg=0;
-
-
-    if(nfqp_dbg>2)
-    	printf("opening library handle\n");
-
+    nfqp_log(info, "opening library handle\n");
     h = nfq_open();
     if (!h) {
-        fprintf(stderr, "error during nfq_open()\n");
+        nfqp_log(error,  "error during nfq_open()\n");
         exit(EXIT_FAILURE);
     }
 
-    if(nfqp_dbg>2)
-    	printf("unbinding existing nf_queue handler for AF_INET (if any)\n");
+    nfqp_log(info,"unbinding existing nf_queue handler for AF_INET (if any)\n");
 
     if (nfq_unbind_pf(h, AF_INET) < 0) {
-        fprintf(stderr, "error during nfq_unbind_pf()\n");
+        nfqp_log(error,  "error during nfq_unbind_pf()\n");
         exit(EXIT_FAILURE);
     }
 
-    if(nfqp_dbg>2)
-    	printf("binding nfnetlink_queue as nf_queue handler for AF_INET\n");
+    nfqp_log(info, "binding nfnetlink_queue as nf_queue handler for AF_INET\n");
 
     if (nfq_bind_pf(h, AF_INET) < 0) {
-        fprintf(stderr, "error during nfq_bind_pf()\n");
+        nfqp_log(error,  "error during nfq_bind_pf()\n");
         exit(EXIT_FAILURE);
     }
 
-    if(nfqp_dbg>2)
-    	printf("binding this socket to queue '0'\n");
+    nfqp_log(info, "binding this socket to queue '0'\n");
 
     qh = nfq_create_queue(h,  queue_num, &nfqp_cb, NULL);
     if (!qh) {
-        fprintf(stderr, "error during nfq_create_queue()\n");
+        nfqp_log(error,  "error during nfq_create_queue()\n");
         exit(EXIT_FAILURE);
     }
-    if(nfqp_dbg>2)
-    	printf("setting copy_packet mode\n");
+    nfqp_log(info, "setting copy_packet mode\n");
 
     if (nfq_set_mode(qh, NFQNL_COPY_PACKET, 0xffff) < 0) {
-        fprintf(stderr, "can't set packet_copy mode\n");
+        nfqp_log(error,  "can't set packet_copy mode\n");
         exit(EXIT_FAILURE);
     }
 
@@ -287,25 +292,25 @@ int nfqp_analyzer_function(void *args)
 
     while ((rv = recv(fd, buf, sizeof(buf), 0)) && rv >= 0) {
 
-    	if(nfqp_dbg>3)
-    		printf("-- New packet received --\n");
+    	 nfqp_log(debug, "-- New packet received --\n");
 
         nfq_handle_packet(h, buf, rv);
+
     }
 
-    printf("unbinding from queue 0\n");
+    nfqp_log(info, "unbinding from queue\n");
     nfq_destroy_queue(qh);
 
 #ifdef INSANE
     /* normally, applications SHOULD NOT issue this command, since
      * it detaches other programs/sockets from AF_INET, too ! */
-    printf("unbinding from AF_INET\n");
+    nfqp_log(info, "unbinding from AF_INET\n");
     nfq_unbind_pf(h, AF_INET);
 #endif
 
-    printf("closing library handle\n");
+    nfqp_log(info, "closing library handle\n");
     nfq_close(h);
 
-    exit(0);
+    exit(EXIT_FAILURE);
 }
 

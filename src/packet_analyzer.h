@@ -20,4 +20,32 @@
 *
 */
 
+
+
+
+// 		EXTER
+
+// global
+
+extern int glb_init();
+
+// nfq_proc
+
+extern int nfqp_init();
+
+extern int nfqp_exit();
+
+extern void nfqp_test_logging(void);
+
+extern int nfqp_analyzer_function();
+
+
+
+
+void signal_handler();
+
+void init();
+
+
+
 #endif /* PACKET_ANALYZER_H_ */
