@@ -16,8 +16,10 @@
 #include <unistd.h>
 #include <stdbool.h>
 #include <time.h>
+#include <sys/types.h>
+#include <arpa/inet.h>
 
-#define BUFSIZE 2048
+#define BUFSIZE 4096
 #define COMMAND_LEN 256
 #define MAX_LOG_MSG 1024
 
@@ -26,17 +28,28 @@
 
 typedef unsigned short __us;
 
+typedef uint32_t addr_t;
 
-typedef struct _pkt_stat_min_t {
+typedef struct _ip_addrs_t{
+    addr_t s_addr;
+    addr_t d_addr;
+} ip_addrs_t;
 
-	char sIP_dec[15];
-	char protocol_name;
-	__us sPort;
+typedef struct _port_nums_t{
+	__us s_port;
+	__us d_port;
+} port_nums_t;
+
+
+typedef struct _pkt_t {
+
+	ip_addrs_t ip_addr;
+	port_nums_t port_num;
 	__us length;
 	__us proto;
-	struct _pkt_stat_min_t *next;
 
-} pkt_stat_min_t;
+} pkt_t;
+
 
 
 enum {critical=1, error, info, debug};

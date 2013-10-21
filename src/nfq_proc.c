@@ -14,18 +14,20 @@
 #include "nfq_proc.h"
 #include "global.h"
 
+#include <stdarg.h>
 
 int logging_level = 4;
 int queue_num = 0;
+int analyzer_is_alive = 1;
+int use_pcap = 0;
 
 char *nfqp_log_fpath = "../logs/nfqp.log";
 
-
-
 char nfqp_command[COMMAND_LEN];
 
-int use_pcap = 0;
 FILE *nfqp_log_file;
+
+pkt_t packet;
 
 /*
  #include <glib.h>
@@ -63,39 +65,40 @@ int main(int argc, char** argv) {
 
 
 
+// Fuction: Process Each Packet. Log them if needed. Packet added to the queue.
+// Returns: Packet id
 
-/* returns packet id */
-static u_int32_t nfqp_print_pkt (struct nfq_data *tb){
+static u_int32_t nfqp_process_pkt (struct nfq_data *tb){
     int id = 0;
     struct nfqnl_msg_packet_hdr *ph;
     u_int32_t mark,ifi;
-    int ret;
-    char *nf_packet;
+	int ret;
+	char *nf_packet;
 
-    ph = nfq_get_msg_packet_hdr(tb);
-    if (ph){
-        id = ntohl(ph->packet_id);
-        printf("hw_protocol=0x%04x hook=%u id=%u ",
-            ntohs(ph->hw_protocol), ph->hook, id);
-    }
+	ret = nfq_get_payload(tb, &nf_packet);
+	ph = nfq_get_msg_packet_hdr(tb);
 
-    mark = nfq_get_nfmark(tb);
-    if (mark)
-        printf("mark=%u ", mark);
+	if (ph) {
+		id = ntohl(ph->packet_id);
+		nfqp_log(debug, "hw_protocol=0x%04x hook=%u id=%u ",
+				ntohs(ph->hw_protocol), ph->hook, id);
+	}
+	mark = nfq_get_nfmark(tb);
+	if (mark)
+		nfqp_log(debug, "mark=%u ", mark);
 
-    ifi = nfq_get_indev(tb);
-    if (ifi)
-        printf("indev=%u ", ifi);
+	ifi = nfq_get_indev(tb);
+	if (ifi)
+		nfqp_log(debug, "indev=%u ", ifi);
 
-    ifi = nfq_get_outdev(tb);
-    if (ifi)
-        printf("outdev=%u ", ifi);
+	ifi = nfq_get_outdev(tb);
+	if (ifi)
+		nfqp_log(debug, "outdev=%u ", ifi);
 
-    ret = nfq_get_payload(tb, &nf_packet);
-    if ((ret >= 0)){
-        printf("payload_len=%d bytes", ret);
-            fputc('\n', stdout);
-        }
+	if ((ret >= 0)) {
+		nfqp_log(debug, "payload_len=%d bytes\n", ret);
+	}
+
 
     // parse the packet headers
     struct iphdr *iph = ((struct iphdr *) nf_packet);
@@ -108,15 +111,17 @@ static u_int32_t nfqp_print_pkt (struct nfq_data *tb){
 
     // display IP HEADERS : ip.h line 45
     // ntohs convert short unsigned int, ntohl do the same for long unsigned int
-    fprintf(stdout, "IP{v=%u; ihl=%u; tos=%u; tot_len=%u; id=%u; ttl=%u; protocol=%u; "
+
+
+    nfqp_log(debug, "IP{v=%u; ihl=%u; tos=%u; tot_len=%u; id=%u; ttl=%u; protocol=%u; "
         ,iph->version, iph->ihl*4, iph->tos, ntohs(iph->tot_len), ntohs(iph->id), iph->ttl, iph->protocol);
 
 
     char *saddr = inet_ntoa(*(struct in_addr *)&iph->saddr);
-    fprintf(stdout,"saddr=%s; ",saddr);
+    nfqp_log(debug, "saddr=%s; ",saddr);
 
     char *daddr = inet_ntoa(*(struct in_addr *)&iph->daddr);
-    fprintf(stdout,"daddr=%s}\n",daddr);
+    nfqp_log(debug, "daddr=%s}\n",daddr);
 
     // if protocol is tcp
     if (iph->protocol == 6){
@@ -133,7 +138,7 @@ static u_int32_t nfqp_print_pkt (struct nfq_data *tb){
 
         /* to print the TCP headers, we access the structure defined in tcp.h line 89
         and convert values from hexadecimal to ascii */
-        fprintf(stdout, "TCP{sport=%u; dport=%u; seq=%u; ack_seq=%u; flags=u%ua%up%ur%us%uf%u; window=%u; urg=%u}\n",
+        nfqp_log(debug, "TCP{sport=%u; dport=%u; seq=%u; ack_seq=%u; flags=u%ua%up%ur%us%uf%u; window=%u; urg=%u}\n",
             ntohs(tcp->source), ntohs(tcp->dest), ntohl(tcp->seq), ntohl(tcp->ack_seq)
             ,tcp->urg, tcp->ack, tcp->psh, tcp->rst, tcp->syn, tcp->fin, ntohs(tcp->window), tcp->urg_ptr);
     }
@@ -141,11 +146,11 @@ static u_int32_t nfqp_print_pkt (struct nfq_data *tb){
     // if protocol is udp
     if(iph->protocol == 17){
         struct udphdr *udp = ((struct udphdr *) (nf_packet + (iph->ihl << 2)));
-        fprintf(stdout,"UDP{sport=%u; dport=%u; len=%u}\n",
+        nfqp_log(debug, "UDP{sport=%u; dport=%u; len=%u}\n",
             ntohs(udp->source), ntohs(udp->dest), udp->len);
     }
 
-    fprintf(stdout,"\n");
+    nfqp_log(debug, "\n");
 
     return (id);
 }
@@ -188,24 +193,28 @@ int nfqp_set_queue(int num){
 static int nfqp_cb(struct nfq_q_handle *qh, struct nfgenmsg *nfmsg,
           struct nfq_data *nfa, void *data)
 {
-    u_int32_t id = nfqp_print_pkt(nfa);
+    u_int32_t id = nfqp_process_pkt(nfa);
 
+    // Adding to the queue for GUI
 
     return (nfq_set_verdict(qh, id, NF_ACCEPT, 0, NULL));
 }
 
-void nfqp_log(int log_lvl, char *msg){
 
+void nfqp_log(int log_lvl, char *msg, ...){
+
+	va_list arg;
+	va_start(arg, msg);
 	char log[MAX_LOG_MSG];
 
-	if ((logging_level - log_lvl) + 1) {
-		snprintf(log, MAX_LOG_MSG, "%.*s", (int)strlen(msg), msg);
+	if ( log_lvl <= logging_level ) {
+		vsprintf(log, msg, arg);
 		fputs(log, nfqp_log_file);
-
 	}
 
-}
+	va_end(arg);
 
+}
 
 int nfqp_init(){
 
@@ -235,6 +244,7 @@ int nfqp_exit(){
 }
 
 void nfqp_test_logging(){
+
 	nfqp_log(debug, "This is a debug");
 	nfqp_log(info, "This is a info");
 	nfqp_log(error, "This is a error");
@@ -273,7 +283,7 @@ int nfqp_analyzer_function(void *args)
         exit(EXIT_FAILURE);
     }
 
-    nfqp_log(info, "binding this socket to queue '0'\n");
+    nfqp_log(info, "binding this socket to queue %d\n", queue_num);
 
     qh = nfq_create_queue(h,  queue_num, &nfqp_cb, NULL);
     if (!qh) {
@@ -290,15 +300,14 @@ int nfqp_analyzer_function(void *args)
     nh = nfq_nfnlh(h);
     fd = nfnl_fd(nh);
 
-    while ((rv = recv(fd, buf, sizeof(buf), 0)) && rv >= 0) {
+	while ((rv = recv(fd, buf, sizeof(buf), 0)) && rv >= 0 && analyzer_is_alive) {
 
-    	 nfqp_log(debug, "-- New packet received --\n");
+		nfqp_log(debug, "-- New packet received --\n");
+		nfq_handle_packet(h, buf, rv);
 
-        nfq_handle_packet(h, buf, rv);
+	}
 
-    }
-
-    nfqp_log(info, "unbinding from queue\n");
+    nfqp_log(info, "unbinding from queue %d\n", queue_num);
     nfq_destroy_queue(qh);
 
 #ifdef INSANE
@@ -310,7 +319,6 @@ int nfqp_analyzer_function(void *args)
 
     nfqp_log(info, "closing library handle\n");
     nfq_close(h);
-
-    exit(EXIT_FAILURE);
+    return (SUCCESS);
 }
 

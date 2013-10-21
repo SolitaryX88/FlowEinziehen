@@ -24,19 +24,21 @@
 
 static u_int32_t nfqp_print_pkt (struct nfq_data *tb);
 
+int nfqp_set_queue(int num);
+
 static int nfqp_cb(struct nfq_q_handle *qh, struct nfgenmsg *nfmsg, struct nfq_data *nfa, void *data);
 
-int nfqp_analyzer_function();
+void nfqp_log(int log_lvl, char *msg, ...);
 
-int nfqp_set_queue(int queue_num);
-
-void nfqp_log_msg(char *msg);
+int nfqp_init_nfqueue();
 
 int nfqp_init();
 
 int nfqp_exit();
 
-void nfqp_test_logging(void);
+void nfqp_test_logging();
+
+int nfqp_analyzer_function(void *args);
 
 
 #endif /* NFQ_PROC_H_ */
