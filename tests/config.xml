@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!--
+	Configuration file for FlowEinziehen
+
+
+FormatExample:
+<Config>
+	<Logging global="4" globalonscreen="true" nfq="4" nfqonscreen="false" />
+	<Queue number="0" />
+	<GUI_socket port="4005" />
+</Config>
+
+!!! In future must be validated by using a DTD file.
+
+-->
+
+<Config>
+	<Logging global="4" globalonscreen="true" nfq="4" nfqonscreen="false" />
+	<Queue number="0" />
+	<GUI_socket port="4005" />
+</Config>

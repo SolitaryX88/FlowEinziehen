@@ -19,7 +19,6 @@
 int logging_level = 4;
 int queue_num = 0;
 int analyzer_is_alive = 1;
-int use_pcap = 0;
 
 char *nfqp_log_fpath = "../logs/nfqp.log";
 

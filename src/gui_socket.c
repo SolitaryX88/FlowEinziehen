@@ -3,21 +3,22 @@
  Name        : gui_socket.c
  Author      : Charalampos Mysirlidis
  Copyright   : GPLv3
- Description : Socket connection for the Java/GUI app.
+ Description : Socket connection for the Java/GUI application.
  ============================================================================
  */
 
 
+#include "global.h"
+
 #include <sys/socket.h>
 #include <netinet/in.h>
-#include <arpa/inet.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
 #include <errno.h>
-#include <string.h>
-#include <sys/types.h>
-#include <time.h> 
+
+int gui_sock_init(){
+
+
+	return(SUCCESS);
+}
 
 int socket_GUI(int port)
 {
