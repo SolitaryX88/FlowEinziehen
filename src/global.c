@@ -10,6 +10,7 @@
 
 #include "global.h"
 
+
 FILE *glb_log_file;
 char *glb_log_fpath = "../logs/global.log";
 
@@ -24,6 +25,7 @@ int glb_init(){
 
 	return(SUCCESS);
 }
+
 
 void glb_exit(){
 
@@ -50,4 +52,7 @@ char *ip_proto_name[150] = { "HOPOPT", "ICMP", "IGMP", "GGP", "IPv4", "ST",
 		"PTP", "IS-IS over IPv4", "FIRE", "CRTP", "CRUDP", "SSCOPMCE", "IPLT",
 		"SPS", "PIPE", "SCTP", "FC", "RSVP-E2E-IGNORE", "Mobility pkt_stat_header",
 		"UDPLite", "MPLS-in-IP", "manet", "HIP", "Shim6", "WESP", "ROHC" };
+
+
+
 

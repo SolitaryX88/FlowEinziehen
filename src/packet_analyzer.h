@@ -23,11 +23,12 @@
 
 
 
-// 		EXTER
+// 		EXTERN!
 
 // global
 
 extern int glb_init();
+
 
 // nfq_proc
 
@@ -40,6 +41,9 @@ extern void nfqp_test_logging(void);
 extern int nfqp_analyzer_function();
 
 
+// config_xml
+
+extern void parse_doc(char *docname);
 
 
 void signal_handler();
