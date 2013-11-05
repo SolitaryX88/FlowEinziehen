@@ -16,8 +16,8 @@
 
 #include <stdarg.h>
 
-int logging_level = 4;
-int queue_num = 0;
+int nfqp_logging_level = 4, nfqp_printf_log_lvl = 1;
+int nfqp_queue_num = 0;
 int analyzer_is_alive = 1;
 
 char *nfqp_log_fpath = "../logs/nfqp.log";
@@ -205,11 +205,14 @@ void nfqp_log(int log_lvl, char *msg, ...){
 	va_list arg;
 	va_start(arg, msg);
 	char log[MAX_LOG_MSG];
+	vsprintf(log, msg, arg);
 
-	if ( log_lvl <= logging_level ) {
-		vsprintf(log, msg, arg);
+	if ( log_lvl <= nfqp_logging_level )
 		fputs(log, nfqp_log_file);
-	}
+
+
+	if ( log_lvl <= nfqp_printf_log_lvl )
+		puts(log);
 
 	va_end(arg);
 
@@ -228,7 +231,7 @@ int nfqp_init(){
 	system("iptables -F");
 
 	nfqp_log(info, "Setup the queue of the iptables\n");
-	nfqp_set_queue(queue_num);
+	nfqp_set_queue(nfqp_queue_num);
 
 	return(SUCCESS);
 }
@@ -282,9 +285,9 @@ int nfqp_analyzer_function(void *args)
         exit(EXIT_FAILURE);
     }
 
-    nfqp_log(info, "binding this socket to queue %d\n", queue_num);
+    nfqp_log(info, "binding this socket to queue %d\n", nfqp_queue_num);
 
-    qh = nfq_create_queue(h,  queue_num, &nfqp_cb, NULL);
+    qh = nfq_create_queue(h,  nfqp_queue_num, &nfqp_cb, NULL);
     if (!qh) {
         nfqp_log(error,  "error during nfq_create_queue()\n");
         exit(EXIT_FAILURE);
@@ -306,7 +309,7 @@ int nfqp_analyzer_function(void *args)
 
 	}
 
-    nfqp_log(info, "unbinding from queue %d\n", queue_num);
+    nfqp_log(info, "unbinding from queue %d\n", nfqp_queue_num);
     nfq_destroy_queue(qh);
 
 #ifdef INSANE

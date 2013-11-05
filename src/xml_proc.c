@@ -1,15 +1,11 @@
 /*
  ============================================================================
- Name        : gui_socket.h
+ Name        : xml_proc.c
  Author      : Charalampos Mysirlidis
  Copyright   : GPLv3
- Description : Socket connection for the Java/GUI app.
+ Description : XML construction/parsing functions for packet info, statistics
  ============================================================================
  */
 
-#ifndef SOCKET_H_
-#define SOCKET_H_
 
-int socket_GUI();
-
-#endif /* SOCKET_H_ */
+#include "xml_proc.h"

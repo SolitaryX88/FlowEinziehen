@@ -28,6 +28,7 @@
 // global
 
 extern int glb_init();
+extern void glb_exit();
 
 
 // nfq_proc

@@ -5,17 +5,17 @@
 
 FormatExample:
 <Config>
-	<Logging global="4" globalonscreen="true" nfq="4" nfqonscreen="false" />
+	<Logging global="4" globalonscreen="4" nfq="4" nfqonscreen="3" />
 	<Queue number="0" />
 	<GUI_socket port="4005" />
 </Config>
 
-!!! In future must be validated by using a DTD file.
+//TODO: The config file must be validated through DTD file one day.
 
 -->
 
 <Config>
-	<Logging global="4" globalonscreen="true" nfq="4" nfqonscreen="false" />
+	<Logging global="4" globalonscreen="4" nfq="4" nfqonscreen="3" />
 	<Queue number="0" />
 	<GUI_socket port="4005" />
 </Config>

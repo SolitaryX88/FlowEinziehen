@@ -10,9 +10,13 @@
 
 #include "global.h"
 
+#include <stdarg.h>
 
 FILE *glb_log_file;
 char *glb_log_fpath = "../logs/global.log";
+
+int glb_logging_level = 4, glb_printf_log_lvl = 3;
+
 
 int glb_init(){
 
@@ -26,9 +30,33 @@ int glb_init(){
 	return(SUCCESS);
 }
 
+void glb_log(int log_lvl, char *msg, ...){
+
+	va_list arg;
+	va_start(arg, msg);
+	char log[MAX_LOG_MSG];
+	vsprintf(log, msg, arg);
+
+	if ( log_lvl <= glb_logging_level )
+		fputs(log, glb_log_file);
+
+	if ( log_lvl <= glb_printf_log_lvl )
+		puts(log);
+
+	va_end(arg);
+}
 
 void glb_exit(){
 
+	fclose(glb_log_file);
+}
+
+void glb_test_logging(){
+
+	glb_log(debug, "This is a debug");
+	glb_log(info, "This is a info");
+	glb_log(error, "This is a error");
+	glb_log(critical, "This is a critical");
 
 }
 

@@ -54,6 +54,12 @@ typedef struct _pkt_t {
 
 enum {critical=1, error, info, debug};
 
+// Function declaration
+
+void glb_log(int log_lvl, char *msg, ...);
+
+void glb_test_logging();
+
 int glb_init();
 
 void glb_exit();

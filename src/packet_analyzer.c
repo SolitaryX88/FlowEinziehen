@@ -48,6 +48,7 @@ int main(int argc, char **argv) {
 
 void signal_handler() {
 	    nfqp_exit();
+	    glb_exit();
 	    exit(EXIT_FAILURE);
 }
 

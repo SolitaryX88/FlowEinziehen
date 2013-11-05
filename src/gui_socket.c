@@ -14,17 +14,20 @@
 #include <netinet/in.h>
 #include <errno.h>
 
+int gui_port;
+
 int gui_sock_init(){
 
 
 	return(SUCCESS);
 }
 
-int socket_GUI(int port)
+int socket_GUI()
 {
 
     int listenfd = 0, connfd = 0, n;
     struct sockaddr_in serv_addr; 
+
 	
     char sendBuff[1025];
     char recvBuff[1025];
@@ -36,7 +39,7 @@ int socket_GUI(int port)
 
     serv_addr.sin_family = AF_INET;
     serv_addr.sin_addr.s_addr = htonl(INADDR_ANY);
-    serv_addr.sin_port = htons(port);
+    serv_addr.sin_port = htons(gui_port);
 
     bind(listenfd, (struct sockaddr*)&serv_addr, sizeof(serv_addr)); 
 

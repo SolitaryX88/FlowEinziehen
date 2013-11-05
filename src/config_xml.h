@@ -16,11 +16,11 @@ int cfg_init() ;
 
 void parse_logging(xmlDocPtr doc, xmlNodePtr cur) ;
 
-void print_log_attributes(xmlDocPtr doc, xmlNodePtr cur) ;
+void set_log_attributes(xmlDocPtr doc, xmlNodePtr cur) ;
 
-void print_queue_attributes(xmlDocPtr doc, xmlNodePtr cur) ;
+void set_queue_attributes(xmlDocPtr doc, xmlNodePtr cur) ;
 
-void print_gui_attributes(xmlDocPtr doc, xmlNodePtr cur);
+void set_gui_attributes(xmlDocPtr doc, xmlNodePtr cur);
 
 void get_log(xmlDocPtr doc, xmlNodePtr cur) ;
 
