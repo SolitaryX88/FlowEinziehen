@@ -16,7 +16,7 @@ int cfg_init() ;
 
 void parse_logging(xmlDocPtr doc, xmlNodePtr cur) ;
 
-void set_log_attributes(xmlDocPtr doc, xmlNodePtr cur) ;
+void set_log_parameters(xmlDocPtr doc, xmlNodePtr cur) ;
 
 void set_queue_attributes(xmlDocPtr doc, xmlNodePtr cur) ;
 
@@ -25,5 +25,7 @@ void set_gui_attributes(xmlDocPtr doc, xmlNodePtr cur);
 void get_log(xmlDocPtr doc, xmlNodePtr cur) ;
 
 void parse_doc(char *docname);
+
+
 
 #endif /* CONFIG_XML_H_ */

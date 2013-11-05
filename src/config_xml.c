@@ -10,7 +10,20 @@
 #include "global.h"
 #include "config_xml.h"
 
+#define getIntProp(xmlCharVar,xmlAttribute,xmlNodePtrVar,setVariable)\
+	xmlCharVar=xmlGetProp(xmlNodePtrVar,xmlAttribute);\
+	setVariable=atoi((char*)xmlCharVar);\
+	xmlFree(xmlCharVar);
+
 //TODO: if config file is not available?
+
+
+extern int gui_port;
+
+extern int nfqp_logging_level, nfqp_printf_log_lvl;
+extern int glb_logging_level, glb_printf_log_lvl;
+
+extern int nfqp_queue_num;
 
 
 int cfg_init() {
@@ -34,32 +47,27 @@ parse_logging(xmlDocPtr doc, xmlNodePtr cur) {
 	return;
 }
 
-void set_log_attributes(xmlDocPtr doc, xmlNodePtr cur) {
+
+
+void set_log_parameters(xmlDocPtr doc, xmlNodePtr cur) {
 
 	xmlChar *attr;
 
-	extern int nfqp_logging_level, nfqp_printf_log_lvl;
-	extern int glb_logging_level, glb_printf_log_lvl;
+	cur = cur->xmlChildrenNode;
 
-	attr = xmlGetProp(cur, "global");
-	nfqp_logging_level = atoi((char*) attr);
-	printf("Global: %s\n", attr);
-	xmlFree(attr);
+	while (cur != NULL ) {
+		if ((!xmlStrcmp(cur->name, (const xmlChar *) "global"))) {
+			getIntProp(attr, "log_lvl", cur, glb_logging_level)
+			getIntProp(attr, "printf_lvl", cur, glb_printf_log_lvl)
 
-	attr = xmlGetProp(cur, "nfq");
-	nfqp_logging_level = atoi((char*) attr);
-	printf("nfq: %s\n", attr);
-	xmlFree(attr);
+		}
+		if ((!xmlStrcmp(cur->name, (const xmlChar *) "nfq"))) {
+			getIntProp(attr, "log_lvl", cur, nfqp_logging_level)
+			getIntProp(attr, "printf_lvl", cur, nfqp_printf_log_lvl)
 
-	attr = xmlGetProp(cur, "globalonscreen");
-	glb_printf_log_lvl = atoi((char*) attr);
-	printf("globalonscreen: %s\n", attr);
-	xmlFree(attr);
-
-	attr = xmlGetProp(cur, "nfqonscreen");
-	nfqp_printf_log_lvl = atoi((char*) attr);
-	printf("nfqonscreen: %s\n", attr);
-	xmlFree(attr);
+		}
+		cur = cur->next;
+	}
 
 	return;
 }
@@ -68,12 +76,7 @@ void set_queue_attributes(xmlDocPtr doc, xmlNodePtr cur) {
 
 	xmlChar *attr;
 
-	extern int nfqp_queue_num;
-
-	attr = xmlGetProp(cur, "number");
-	nfqp_queue_num = atoi((char*) attr);
-	printf("number: %s\n", attr);
-	xmlFree(attr);
+	getIntProp(attr, "number", cur, nfqp_queue_num)
 
 	return;
 }
@@ -82,12 +85,7 @@ void set_gui_attributes(xmlDocPtr doc, xmlNodePtr cur) {
 
 	xmlChar *attr;
 
-	extern int gui_port;
-
-	attr = xmlGetProp(cur, "port");
-	gui_port = atoi((char*) attr);
-	printf("port: %s\n", attr);
-	xmlFree(attr);
+	getIntProp(attr, "port", cur, gui_port)
 
 	return;
 }
@@ -139,7 +137,7 @@ void parse_doc(char *docname) {
 	while (cur != NULL ) {
 
 		if ((!xmlStrcmp(cur->name, (const xmlChar *) "Logging"))) {
-			set_log_attributes(doc, cur);
+			set_log_parameters(doc, cur);
 		} else if ((!xmlStrcmp(cur->name, (const xmlChar *) "Queue"))) {
 			set_queue_attributes(doc, cur);
 		} else if ((!xmlStrcmp(cur->name, (const xmlChar *) "GUI_socket"))) {
@@ -148,6 +146,9 @@ void parse_doc(char *docname) {
 
 		cur = cur->next;
 	}
+
+	printf("Cfg: Global(log, print): %d %d \t NFQ(log, print): %d %d\n", glb_logging_level, glb_printf_log_lvl, nfqp_logging_level, nfqp_printf_log_lvl);
+
 
 	xmlFreeDoc(doc);
 	return;
