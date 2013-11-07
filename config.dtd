@@ -1,0 +1,22 @@
+<!ELEMENT Config (Logging,Queue,GUI_socket)>
+<!ELEMENT Logging (global, nfq)>
+
+<!ELEMENT nfq EMPTY>
+<!ELEMENT global EMPTY>
+<!ELEMENT Queue EMPTY>
+<!ELEMENT GUI_socket EMPTY>
+
+<!ATTLIST global 
+  log_lvl CDATA #REQUIRED
+  printf_lvl CDATA #REQUIRED
+>
+
+<!ATTLIST nfq 
+  log_lvl CDATA #REQUIRED
+  printf_lvl CDATA #REQUIRED
+>
+
+<!ATTLIST Queue number CDATA #REQUIRED>
+
+<!ATTLIST GUI_socket port CDATA #REQUIRED>
+

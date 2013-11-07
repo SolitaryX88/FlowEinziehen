@@ -105,16 +105,52 @@ void get_log(xmlDocPtr doc, xmlNodePtr cur) {
 	return;
 }
 
+
+void xml_error(void* ctx, const char* msg, ...)
+{
+
+    va_list args;
+    char buf[MAX_LOG_MSG];
+
+    buf[0] = '\0';
+
+    va_start(args, msg);
+    vsnprintf((char *) buf, sizeof(buf), msg, args);
+    va_end(args);
+
+	fprintf(stderr, "libxml2 error: \"%s\"\n", buf);
+}
+
 void parse_doc(char *docname) {
 
 	xmlDocPtr doc;
 	xmlNodePtr cur;
+	xmlDtdPtr dtd;
+	xmlParserCtxtPtr ctxt;
 
-	doc = xmlParseFile(docname);
+	LIBXML_TEST_VERSION
+
+	ctxt = xmlNewParserCtxt();
+
+	if (ctxt == NULL ) {
+		fprintf(stderr, "Failed to allocate parser context. \n");
+		exit(0);
+	}
+
+	xmlSetGenericErrorFunc(&ctxt, &xml_error);
+
+	/// parse the file, activating the DTD validation option
+	doc = xmlCtxtReadFile(ctxt, docname, NULL, XML_PARSE_DTDVALID);
 
 	if (doc == NULL ) {
-		fprintf(stderr, "Document not parsed successfully. \n");
-		return;
+		fprintf(stderr, "XML configuration file not parsed successfully. \n");
+		exit(0);
+	} else {
+		/// check if validation succeeded
+		if (ctxt->valid == 0) {
+			fprintf(stderr, "Failed to validate %s\n", docname);
+			exit(0);
+		}
 	}
 
 	cur = xmlDocGetRootElement(doc);
@@ -153,6 +189,3 @@ void parse_doc(char *docname) {
 	xmlFreeDoc(doc);
 	return;
 }
-
-
-

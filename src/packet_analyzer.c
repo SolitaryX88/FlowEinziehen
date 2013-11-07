@@ -14,10 +14,10 @@
 
 int main(int argc, char **argv) {
 
-	char *configf;
+	char *config_xml;
 
-	if (argc <= 1) {
-		printf("Usage: %s docname\n", argv[0]);
+	if (argc != 2) {
+		printf("Usage: %s config.xml \n", argv[0]);
 		return (EXIT_SUCCESS);
 	}
 
@@ -27,8 +27,8 @@ int main(int argc, char **argv) {
 
 	/** Read configure file */
 
-	configf = argv[1];
-	parse_doc(configf);
+	config_xml = argv[1];
+	parse_doc(config_xml);
 
 
 	/** Initialize NFQUEUE forwarding process, logging files e.t.c */
