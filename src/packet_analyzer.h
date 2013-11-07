@@ -22,12 +22,17 @@
 
 
 
+void signal_handler();
+
+void init();
+
 
 // 		EXTERN!
 
 // global
 
 extern int glb_init();
+
 extern void glb_exit();
 
 
@@ -47,9 +52,6 @@ extern int nfqp_analyzer_function();
 extern void parse_doc(char *docname);
 
 
-void signal_handler();
-
-void init();
 
 
 
