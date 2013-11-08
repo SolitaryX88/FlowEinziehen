@@ -20,11 +20,12 @@
 #include <libnetfilter_queue/libnetfilter_queue.h>
 #include <linux/ip.h>
 
+#include "global.h"
 
 
 static u_int32_t nfqp_print_pkt (struct nfq_data *tb);
 
-int nfqp_set_queue(int num);
+int nfqp_set_queue();
 
 static int nfqp_cb(struct nfq_q_handle *qh, struct nfgenmsg *nfmsg, struct nfq_data *nfa, void *data);
 

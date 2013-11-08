@@ -11,6 +11,9 @@
 
 #include <libxml/xmlmemory.h>
 #include <libxml/parser.h>
+#include <libxml/xmlstring.h>
+#include <libxml/xmlreader.h>
+#include <libxml/globals.h>
 
 int cfg_init() ;
 

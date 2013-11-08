@@ -15,7 +15,7 @@ FormatExample:
 <Config>
   <Logging>
     <global log_lvl="4" printf_lvl="4" />
-    <nfq log_lvl="4" printf_lvl="3" />
+    <nfq log_lvl="4" printf_lvl="4" />
   </Logging>
 
   <Queue number="0" />
