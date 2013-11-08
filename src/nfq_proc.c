@@ -12,13 +12,15 @@
  */
 
 #include "nfq_proc.h"
-#include "global.h"
+#include <glib.h>
 
 #include <stdarg.h>
+#include <glib.h>
 
 int nfqp_logging_level = 4, nfqp_printf_log_lvl = 1;
 int nfqp_queue_num = 0;
 int analyzer_is_alive = 1;
+int keep_stats = 1;
 
 char *nfqp_log_fpath = "../logs/nfqp.log";
 
@@ -26,7 +28,9 @@ char nfqp_command[COMMAND_LEN];
 
 FILE *nfqp_log_file;
 
-pkt_t packet;
+GQueue* pkt_q;
+
+
 
 /*
  #include <glib.h>
@@ -63,6 +67,32 @@ int main(int argc, char** argv) {
 */
 
 
+// Function: 	Creates a packet struct from the information given out of the original packet
+// Returns: 	A pointer address of the packet.
+
+
+void nfqp_print_queue_packets(gpointer item) {
+	pkt_t* p = (pkt_t*) item;
+
+	nfqp_log(debug, "Packet IP info, Address: S: %s D:%s Length: %u \t",
+			inet_ntoa(*(struct in_addr *) &p->ip.s_addr), inet_ntoa(*(struct in_addr *) &p->ip.d_addr), p->length);
+
+	nfqp_log(debug, "Transport info, Protocol: %d "
+			"Window Size: %u "
+			"Ports: S: %u D:%u \n\n", p->trans.proto, ntohs(p->trans.window_size),
+			ntohs(p->trans.port_num.s_port), ntohs(p->trans.port_num.d_port));
+
+}
+
+pkt_t* nfqp_make_pkt(ip_addrs_t* ip, __us_t len , trans_t* trans ) {
+	pkt_t* p = g_new(pkt_t, 1); // allocates one memory packet
+
+	p->ip = *(ip);
+	p->length = len;
+	p->trans = *(trans);
+
+	return(p);
+}
 
 // Fuction: Process Each Packet. Log them if needed. Packet added to the queue.
 // Returns: Packet id
@@ -73,6 +103,14 @@ static u_int32_t nfqp_process_pkt (struct nfq_data *tb){
     u_int32_t mark,ifi;
 	int ret;
 	char *nf_packet;
+	char *saddr;
+	char *daddr;
+
+	ip_addrs_t* ip = mem_alloc(ip_addrs_t, 1);
+	__us_t len;
+	trans_t* trans = mem_alloc(trans_t, 1);
+
+//	pkt_t* p = mem_alloc(pkt_t, 1);
 
 	ret = nfq_get_payload(tb, &nf_packet);
 	ph = nfq_get_msg_packet_hdr(tb);
@@ -115,12 +153,21 @@ static u_int32_t nfqp_process_pkt (struct nfq_data *tb){
     nfqp_log(debug, "IP{v=%u; ihl=%u; tos=%u; tot_len=%u; id=%u; ttl=%u; protocol=%u; "
         ,iph->version, iph->ihl*4, iph->tos, ntohs(iph->tot_len), ntohs(iph->id), iph->ttl, iph->protocol);
 
+   saddr = inet_ntoa(*(struct in_addr *)&iph->saddr);
+   nfqp_log(debug, "saddr=%s; ",saddr);
 
-    char *saddr = inet_ntoa(*(struct in_addr *)&iph->saddr);
-    nfqp_log(debug, "saddr=%s; ",saddr);
+   daddr = inet_ntoa(*(struct in_addr *)&iph->daddr);
+   nfqp_log(debug, "daddr=%s}\n",daddr);
 
-    char *daddr = inet_ntoa(*(struct in_addr *)&iph->daddr);
-    nfqp_log(debug, "daddr=%s}\n",daddr);
+
+    if(keep_stats){
+    	len = ntohs(iph->tot_len);
+    	trans->proto = (__us_t) iph->protocol;
+    	ip->s_addr =(addr_t) iph->saddr;
+    	ip->d_addr = (addr_t) iph->daddr;
+    }
+
+
 
     // if protocol is tcp
     if (iph->protocol == 6){
@@ -140,6 +187,13 @@ static u_int32_t nfqp_process_pkt (struct nfq_data *tb){
         nfqp_log(debug, "TCP{sport=%u; dport=%u; seq=%u; ack_seq=%u; flags=u%ua%up%ur%us%uf%u; window=%u; urg=%u}\n",
             ntohs(tcp->source), ntohs(tcp->dest), ntohl(tcp->seq), ntohl(tcp->ack_seq)
             ,tcp->urg, tcp->ack, tcp->psh, tcp->rst, tcp->syn, tcp->fin, ntohs(tcp->window), tcp->urg_ptr);
+
+        if(keep_stats){
+        	trans->port_num.s_port = (port_t) tcp->source;
+        	trans->port_num.d_port = (port_t) tcp->dest;
+        	trans->window_size = (__us_t) tcp->window;
+        }
+
     }
 
     // if protocol is udp
@@ -147,7 +201,17 @@ static u_int32_t nfqp_process_pkt (struct nfq_data *tb){
         struct udphdr *udp = ((struct udphdr *) (nf_packet + (iph->ihl << 2)));
         nfqp_log(debug, "UDP{sport=%u; dport=%u; len=%u}\n",
             ntohs(udp->source), ntohs(udp->dest), udp->len);
+
+        if(keep_stats){
+        	trans->port_num.s_port = (port_t) udp->source;
+        	trans->port_num.d_port = (port_t) udp->dest;
+        	trans->window_size = -1;
+        }
+
     }
+
+    if(keep_stats)
+    	g_queue_push_tail(pkt_q , nfqp_make_pkt(ip, len, trans));
 
     nfqp_log(debug, "\n");
 
@@ -181,9 +245,20 @@ static u_int32_t nfqp_process_pkt (struct nfq_data *tb){
 //}
 
 
-int nfqp_set_queue(int num){
+int nfqp_unset_queue(){
 
-	snprintf(nfqp_command, COMMAND_LEN, "iptables -A INPUT -j NFQUEUE --queue-num %d", num);
+	memset(nfqp_command, '\0', COMMAND_LEN);
+	//Remove ip table rule;
+	snprintf(nfqp_command, COMMAND_LEN, "iptables -D INPUT -j NFQUEUE --queue-num %d", nfqp_queue_num);
+	system(nfqp_command);
+
+
+	return(SUCCESS);
+}
+
+int nfqp_set_queue(){
+
+	snprintf(nfqp_command, COMMAND_LEN, "iptables -A INPUT -j NFQUEUE --queue-num %d", nfqp_queue_num);
 	system(nfqp_command);
 
 	return(SUCCESS);
@@ -228,18 +303,31 @@ int nfqp_init(){
 	}
 
 	nfqp_log(info, "Deleting previous iptables\n");
-	system("iptables -F");
+	//TODO: Delete single iptable (do not delete all of them) ("iptables -D INPUT -j NFQUEUE --queue-num %d", num);
+
+	//Clearing previous not removed ip tables rule.
+	nfqp_unset_queue();
 
 	nfqp_log(info, "Setup the queue of the iptables\n");
-	nfqp_set_queue(nfqp_queue_num);
+	nfqp_set_queue();
+
+	pkt_q = g_queue_new();
 
 	return(SUCCESS);
 }
 
 int nfqp_exit(){
 
+	nfqp_unset_queue();
+	//Stop packet analyzer
+	analyzer_is_alive = 0;
+
+	if(keep_stats)
+		g_queue_foreach(pkt_q, (GFunc) nfqp_print_queue_packets, NULL );
+
 	fclose(nfqp_log_file);
-	system("iptables -F");
+
+	g_queue_free(pkt_q);
 
 	return(SUCCESS);
 

@@ -19,12 +19,15 @@
 #include <linux/netfilter.h>
 #include <libnetfilter_queue/libnetfilter_queue.h>
 #include <linux/ip.h>
+#include <glib.h>
+
+#include "global.h"
 
 
 
-static u_int32_t nfqp_print_pkt (struct nfq_data *tb);
+int nfqp_set_queue();
 
-int nfqp_set_queue(int num);
+int nfqp_unset_queue();
 
 static int nfqp_cb(struct nfq_q_handle *qh, struct nfgenmsg *nfmsg, struct nfq_data *nfa, void *data);
 
@@ -39,6 +42,10 @@ int nfqp_exit();
 void nfqp_test_logging();
 
 int nfqp_analyzer_function(void *args);
+
+void nfqp_print_queue_packets(gpointer item);
+
+pkt_t* nfqp_make_pkt(ip_addrs_t* ip, __us_t len , trans_t* trans );
 
 
 #endif /* NFQ_PROC_H_ */

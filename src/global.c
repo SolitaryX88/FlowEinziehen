@@ -18,6 +18,7 @@ char *glb_log_fpath = "../logs/global.log";
 int glb_logging_level = 4, glb_printf_log_lvl = 3;
 
 
+
 int glb_init(){
 
 	glb_log_file = fopen(glb_log_fpath, "w");

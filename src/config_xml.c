@@ -179,7 +179,6 @@ void parse_doc(char *docname) {
 		} else if ((!xmlStrcmp(cur->name, (const xmlChar *) "GUI_socket"))) {
 			set_gui_attributes(doc, cur);
 		}
-
 		cur = cur->next;
 	}
 
