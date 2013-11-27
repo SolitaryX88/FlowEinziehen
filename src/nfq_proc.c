@@ -18,18 +18,13 @@ int nfqp_logging_level = 4, nfqp_printf_log_lvl = 1;
 int nfqp_queue_num = 0;
 int analyzer_is_alive = 1;
 
-extern int stats_keep;
-
 char *nfqp_log_fpath = "../logs/nfqp.log";
-
 char nfqp_command[COMMAND_LEN];
-
 FILE *nfqp_log_file;
 
 extern GQueue* stats_pkt_q;
-
 extern pthread_mutex_t stats_lock;
-
+extern int stats_keep;
 
 /*
  #include <glib.h>
@@ -68,7 +63,6 @@ int main(int argc, char** argv) {
 
 // Function: 	Creates a packet struct from the information given out of the original packet
 // Returns: 	A pointer address of the packet.
-
 
 void nfqp_print_queue_packets(gpointer item) {
 
@@ -246,6 +240,10 @@ int nfqp_set_queue(){
 	return(SUCCESS);
 }
 
+// Function: 	The call-back function which sets verdict to the packet.
+// Returns: 	xxx
+
+
 static int nfqp_cb(struct nfq_q_handle *qh, struct nfgenmsg *nfmsg,
           struct nfq_data *nfa, void *data)
 {
@@ -291,7 +289,6 @@ int nfqp_init(){
 	nfqp_log(info, "Setup the queue of the iptables\n");
 	nfqp_set_queue();
 
-	stats_pkt_q = g_queue_new();
 
 	return(SUCCESS);
 }
@@ -302,12 +299,10 @@ int nfqp_exit(){
 	//Stop packet analyzer
 	analyzer_is_alive = 0;
 
-	if(stats_keep)
-		g_queue_foreach(stats_pkt_q, (GFunc) nfqp_print_queue_packets, NULL );
+//	if(stats_keep)
+//		g_queue_foreach(stats_pkt_q, (GFunc) nfqp_print_queue_packets, NULL );
 
 	fclose(nfqp_log_file);
-
-	g_queue_free(stats_pkt_q);
 
 	return(SUCCESS);
 
@@ -321,6 +316,9 @@ void nfqp_test_logging(){
 	nfqp_log(critical, "This is a critical");
 
 }
+
+// Function: 	Main function of the nfq_proc.c
+// Returns: 	SUCCESS (int)
 
 int nfqp_analyzer_function(void *args)
 {

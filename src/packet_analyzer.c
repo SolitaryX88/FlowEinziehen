@@ -32,8 +32,8 @@ int main(int argc, char **argv) {
 
 	/** Initialize NFQUEUE forwarding process, logging files e.t.c */
 
-	if(!nfqp_init() || !glb_init() /* MYSQL , */){
-		exit(EXIT_FAILURE);
+	if(!nfqp_init() || !glb_init() || !stats_init() /* MYSQL , */){
+		exit_proc();
 	}
 
 

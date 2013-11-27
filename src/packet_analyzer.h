@@ -55,6 +55,8 @@ extern void parse_doc(char *docname);
 
 extern void stats_exit();
 
+extern int stats_init();
+
 
 
 #endif /* PACKET_ANALYZER_H_ */

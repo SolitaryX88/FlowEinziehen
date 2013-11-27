@@ -20,6 +20,7 @@
 #include <libnetfilter_queue/libnetfilter_queue.h>
 #include <linux/ip.h>
 #include <glib.h>
+#include <time.h>
 
 #include "global.h"
 

@@ -6,6 +6,8 @@
  Description : Database functionalities
  ============================================================================
  */
+typedef int (*FunctionPtr)(int);
+
 
 int addOne(int num){
 
@@ -21,8 +23,6 @@ int addThree(int num){
 
 	return (num+3);
 }
-
-typedef int (*FunctionPtr)(int);
 
 
 typedef struct _add_t   {
