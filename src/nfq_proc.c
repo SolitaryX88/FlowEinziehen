@@ -12,15 +12,13 @@
  */
 
 #include "nfq_proc.h"
-#include <glib.h>
-
 #include <stdarg.h>
-#include <glib.h>
 
 int nfqp_logging_level = 4, nfqp_printf_log_lvl = 1;
 int nfqp_queue_num = 0;
 int analyzer_is_alive = 1;
-int keep_stats = 1;
+
+extern int stats_keep;
 
 char *nfqp_log_fpath = "../logs/nfqp.log";
 
@@ -28,8 +26,9 @@ char nfqp_command[COMMAND_LEN];
 
 FILE *nfqp_log_file;
 
-GQueue* pkt_q;
+extern GQueue* stats_pkt_q;
 
+extern pthread_mutex_t stats_lock;
 
 
 /*
@@ -72,10 +71,12 @@ int main(int argc, char** argv) {
 
 
 void nfqp_print_queue_packets(gpointer item) {
+
 	pkt_t* p = (pkt_t*) item;
 
-	nfqp_log(debug, "Packet IP info, Address: S: %s D:%s Length: %u \t",
-			inet_ntoa(*(struct in_addr *) &p->ip.s_addr), inet_ntoa(*(struct in_addr *) &p->ip.d_addr), p->length);
+	nfqp_log(debug, "Packet IP info, Address: S: %s", inet_ntoa(*(struct in_addr *) &p->ip.s_addr));
+
+	nfqp_log(debug, " D:%s Length: %u \t", inet_ntoa(*(struct in_addr *) &p->ip.d_addr), p->length);
 
 	nfqp_log(debug, "Transport info, Protocol: %d "
 			"Window Size: %u "
@@ -84,21 +85,22 @@ void nfqp_print_queue_packets(gpointer item) {
 
 }
 
-pkt_t* nfqp_make_pkt(ip_addrs_t* ip, __us_t len , trans_t* trans ) {
-	pkt_t* p = g_new(pkt_t, 1); // allocates one memory packet
-
-	p->ip = *(ip);
-	p->length = len;
-	p->trans = *(trans);
-
-	return(p);
-}
+//pkt_t* nfqp_make_pkt(ip_addrs_t* ip, __us_t len , trans_t* trans ) {
+//	pkt_t* p = g_new(pkt_t, 1); // allocates one memory packet
+//
+//	p->ip = *(ip);
+//	p->length = len;
+//	p->trans = *(trans);
+//
+//	return(p);
+//}
 
 // Fuction: Process Each Packet. Log them if needed. Packet added to the queue.
 // Returns: Packet id
 
 static u_int32_t nfqp_process_pkt (struct nfq_data *tb){
-    int id = 0;
+
+	int id = 0;
     struct nfqnl_msg_packet_hdr *ph;
     u_int32_t mark,ifi;
 	int ret;
@@ -106,11 +108,7 @@ static u_int32_t nfqp_process_pkt (struct nfq_data *tb){
 	char *saddr;
 	char *daddr;
 
-	ip_addrs_t* ip = mem_alloc(ip_addrs_t, 1);
-	__us_t len;
-	trans_t* trans = mem_alloc(trans_t, 1);
-
-//	pkt_t* p = mem_alloc(pkt_t, 1);
+	pkt_t *pkt = mem_alloc(pkt_t,1);
 
 	ret = nfq_get_payload(tb, &nf_packet);
 	ph = nfq_get_msg_packet_hdr(tb);
@@ -137,7 +135,7 @@ static u_int32_t nfqp_process_pkt (struct nfq_data *tb){
 	}
 
 
-    // parse the packet headers
+    // parse the pkt headers
     struct iphdr *iph = ((struct iphdr *) nf_packet);
 
     // Computing IP address translation from 32 bits words to 4*8bits decimal
@@ -160,13 +158,20 @@ static u_int32_t nfqp_process_pkt (struct nfq_data *tb){
    nfqp_log(debug, "daddr=%s}\n",daddr);
 
 
-    if(keep_stats){
-    	len = ntohs(iph->tot_len);
-    	trans->proto = (__us_t) iph->protocol;
-    	ip->s_addr =(addr_t) iph->saddr;
-    	ip->d_addr = (addr_t) iph->daddr;
-    }
+    if(stats_keep){
 
+
+    	pkt->length = ntohs(iph->tot_len);
+
+    	pkt->trans.proto = (__us_t) iph->protocol;
+
+    	pkt->ip.s_addr =(addr_t) iph->saddr;
+    	pkt->ip.d_addr = (addr_t) iph->daddr;
+
+        memset(&(pkt->time), 0, sizeof(struct timeval));
+        gettimeofday(&(pkt->time), NULL);
+
+    }
 
 
     // if protocol is tcp
@@ -188,10 +193,10 @@ static u_int32_t nfqp_process_pkt (struct nfq_data *tb){
             ntohs(tcp->source), ntohs(tcp->dest), ntohl(tcp->seq), ntohl(tcp->ack_seq)
             ,tcp->urg, tcp->ack, tcp->psh, tcp->rst, tcp->syn, tcp->fin, ntohs(tcp->window), tcp->urg_ptr);
 
-        if(keep_stats){
-        	trans->port_num.s_port = (port_t) tcp->source;
-        	trans->port_num.d_port = (port_t) tcp->dest;
-        	trans->window_size = (__us_t) tcp->window;
+        if(stats_keep){
+        	pkt->trans.port_num.s_port = (port_t) tcp->source;
+        	pkt->trans.port_num.d_port = (port_t) tcp->dest;
+        	pkt->trans.window_size = (__us_t) tcp->window;
         }
 
     }
@@ -202,48 +207,25 @@ static u_int32_t nfqp_process_pkt (struct nfq_data *tb){
         nfqp_log(debug, "UDP{sport=%u; dport=%u; len=%u}\n",
             ntohs(udp->source), ntohs(udp->dest), udp->len);
 
-        if(keep_stats){
-        	trans->port_num.s_port = (port_t) udp->source;
-        	trans->port_num.d_port = (port_t) udp->dest;
-        	trans->window_size = -1;
+        if(stats_keep){
+        	pkt->trans.port_num.s_port = (port_t) udp->source;
+        	pkt->trans.port_num.d_port = (port_t) udp->dest;
+        	pkt->trans.window_size = 0;
         }
 
     }
 
-    if(keep_stats)
-    	g_queue_push_tail(pkt_q , nfqp_make_pkt(ip, len, trans));
+
+    if(stats_keep){
+    	pthread_mutex_lock(&stats_lock);
+    	g_queue_push_tail(stats_pkt_q , pkt);
+    	pthread_mutex_unlock(&stats_lock);
+    }
 
     nfqp_log(debug, "\n");
 
     return (id);
 }
-
-//static u_int32_t record_pkt (struct nfq_data *tb){
-//
-//    /*! create pcap specific header
-//     */
-//    struct pcap_pkthdr phdr;
-//
-//    /*! init capture time
-//     */
-//    static struct timeval t;
-//    memset (&t, 0, sizeof(struct timeval));
-//    gettimeofday(&t, NULL);
-//    phdr.ts.tv_sec = t.tv_sec;
-//    phdr.ts.tv_usec = t.tv_usec;
-//
-//    /*! populate pcap struct with packet headers
-//     */
-//    char *nf_packet;
-//    phdr.caplen = nfq_get_payload(tb,&nf_packet);
-//    phdr.len = phdr.caplen;
-//
-//    /*! dump packet data to the file */
-//    pcap_dump((u_char *)p_output, &phdr, (const u_char *)nf_packet);
-//
-//    return 0;
-//}
-
 
 int nfqp_unset_queue(){
 
@@ -274,7 +256,6 @@ static int nfqp_cb(struct nfq_q_handle *qh, struct nfgenmsg *nfmsg,
     return (nfq_set_verdict(qh, id, NF_ACCEPT, 0, NULL));
 }
 
-
 void nfqp_log(int log_lvl, char *msg, ...){
 
 	va_list arg;
@@ -303,7 +284,6 @@ int nfqp_init(){
 	}
 
 	nfqp_log(info, "Deleting previous iptables\n");
-	//TODO: Delete single iptable (do not delete all of them) ("iptables -D INPUT -j NFQUEUE --queue-num %d", num);
 
 	//Clearing previous not removed ip tables rule.
 	nfqp_unset_queue();
@@ -311,7 +291,7 @@ int nfqp_init(){
 	nfqp_log(info, "Setup the queue of the iptables\n");
 	nfqp_set_queue();
 
-	pkt_q = g_queue_new();
+	stats_pkt_q = g_queue_new();
 
 	return(SUCCESS);
 }
@@ -322,12 +302,12 @@ int nfqp_exit(){
 	//Stop packet analyzer
 	analyzer_is_alive = 0;
 
-	if(keep_stats)
-		g_queue_foreach(pkt_q, (GFunc) nfqp_print_queue_packets, NULL );
+	if(stats_keep)
+		g_queue_foreach(stats_pkt_q, (GFunc) nfqp_print_queue_packets, NULL );
 
 	fclose(nfqp_log_file);
 
-	g_queue_free(pkt_q);
+	g_queue_free(stats_pkt_q);
 
 	return(SUCCESS);
 
@@ -341,7 +321,6 @@ void nfqp_test_logging(){
 	nfqp_log(critical, "This is a critical");
 
 }
-
 
 int nfqp_analyzer_function(void *args)
 {

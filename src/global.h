@@ -19,7 +19,9 @@
 #include <sys/types.h>
 #include <arpa/inet.h>
 #include <linux/types.h>
+#include <glib.h>
 
+#define MICROSECS 1000
 
 #define BUFSIZE 4096
 #define COMMAND_LEN 256
@@ -31,6 +33,7 @@
 
 #define mem_alloc(type, size)\
         (type *) malloc (sizeof (type) * size);
+
 
 
 typedef unsigned short __us_t;
@@ -60,6 +63,7 @@ typedef struct _pkt_t {
 	ip_addrs_t ip;
 	trans_t trans;
 	__us_t length;
+	struct timeval time;
 
 } pkt_t;
 

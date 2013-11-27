@@ -22,7 +22,7 @@
 
 
 
-void signal_handler();
+void exit_proc();
 
 void init();
 
@@ -51,7 +51,9 @@ extern int nfqp_analyzer_function();
 
 extern void parse_doc(char *docname);
 
+// statistics.c
 
+extern void stats_exit();
 
 
 

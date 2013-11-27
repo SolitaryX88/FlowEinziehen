@@ -11,7 +11,6 @@
 #include "packet_analyzer.h"
 #include <signal.h>
 
-
 int main(int argc, char **argv) {
 
 	char *config_xml;
@@ -23,7 +22,7 @@ int main(int argc, char **argv) {
 
 
 	// GET Ctrl+C signal;
-	signal(SIGINT, signal_handler);
+	signal(SIGINT, exit_proc);
 
 	/** Read configure file */
 
@@ -33,11 +32,15 @@ int main(int argc, char **argv) {
 
 	/** Initialize NFQUEUE forwarding process, logging files e.t.c */
 
-	if(!nfqp_init() || !glb_init()){
+	if(!nfqp_init() || !glb_init() /* MYSQL , */){
 		exit(EXIT_FAILURE);
 	}
 
+
+
+
 	nfqp_analyzer_function();
+
 
 
 	return(EXIT_SUCCESS);
@@ -46,8 +49,9 @@ int main(int argc, char **argv) {
 
 
 
-void signal_handler() {
+void exit_proc() {
 	    nfqp_exit();
+	    stats_exit();
 	    glb_exit();
 	    exit(EXIT_FAILURE);
 }

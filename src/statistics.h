@@ -11,6 +11,18 @@
 #define STATISTICS_H_
 
 
+// Main exit procedure
+extern void exit_proc();
+
+
+
+void stats_analyze_data ();
+
+void *stats_analysis_deque(void *args);
+
+void init_stats();
+
+void stats_exit ();
 
 
 #endif /* STATISTICS_H_ */
