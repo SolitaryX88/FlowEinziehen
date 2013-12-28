@@ -54,7 +54,7 @@ int mainfunction() {
 
 	setupF();
 
-	printf("This is the res: %d", f.add2(5) );
+	printf("This is the res: %d", (int) f.add2(5) );
 
 	return(0);
 

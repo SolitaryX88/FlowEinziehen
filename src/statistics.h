@@ -10,15 +10,22 @@
 #ifndef STATISTICS_H_
 #define STATISTICS_H_
 
+typedef struct _max_value_t {
+	uint32_t key,
+			freq;
+} freq_value_t; // The most frequent key -> (IP, Transport layer port)
+
+
 typedef struct _stat_ip_t{
 
-
+	freq_value_t freq_source;
 }stat_ip_t;
 
 typedef struct _stat_tran_t{
 	uint16_t	aver_win_size;
 	uint32_t	tcp_pkts;
 	uint32_t	udp_pkts;
+	freq_value_t freq_source, freq_dest; // The most frequent source/destination port
 
 }stat_trans_t;
 
@@ -35,7 +42,7 @@ typedef struct _stat_pkt_t{
 extern void exit_proc();
 
 
-stat_pkt_t * analyze_pkts (GQueue *q);
+stat_pkt_t * analyze_pkts (int id);
 
 void *stats_analysis_deque(void *args);
 
@@ -43,6 +50,8 @@ int stats_init();
 
 void stats_exit();
 
-void switch_queues();
+void switch_stat();
+
+void reset_freq();
 
 #endif /* STATISTICS_H_ */

@@ -26,6 +26,13 @@
 
 
 
+#define set_max(hash)\
+void set_max_##hash(int key, int value);
+
+#define hashes(hash)\
+void increase_##hash(uint32_t key);
+
+
 int nfqp_set_queue();
 
 int nfqp_unset_queue();
@@ -47,6 +54,15 @@ int nfqp_analyzer_function(void *args);
 void nfqp_print_queue_packets(gpointer item);
 
 pkt_t* nfqp_make_pkt(ip_addrs_t* ip, __us_t len , trans_t* trans );
+
+
+set_max(hash_port_d)
+set_max(hash_port_s)
+set_max(hash_ip)
+
+hashes(hash_port_d)
+hashes(hash_port_s)
+hashes(hash_ip)
 
 
 #endif /* NFQ_PROC_H_ */

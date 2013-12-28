@@ -6,12 +6,12 @@
 <!ELEMENT Queue EMPTY>
 <!ELEMENT GUI_socket EMPTY>
 
-<!ATTLIST global 
+<!ATTLIST global
   log_lvl CDATA #REQUIRED
   printf_lvl CDATA #REQUIRED
 >
 
-<!ATTLIST nfq 
+<!ATTLIST nfq
   log_lvl CDATA #REQUIRED
   printf_lvl CDATA #REQUIRED
 >

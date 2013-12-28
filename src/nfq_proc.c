@@ -128,8 +128,9 @@ static u_int32_t nfqp_process_pkt (struct nfq_data *tb){
 		nfqp_log(debug, "payload_len=%d bytes\n", ret);
 	}
 
+	// TODO The following process can take place in a thread this will make it even faster
 
-    // parse the pkt headers
+	// parse the pkt headers
     struct iphdr *iph = ((struct iphdr *) nf_packet);
 
     // Computing IP address translation from 32 bits words to 4*8bits decimal

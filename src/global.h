@@ -17,11 +17,10 @@
 #include <stdbool.h>
 #include <time.h>
 #include <sys/types.h>
+#include <sys/time.h>
 #include <arpa/inet.h>
 #include <linux/types.h>
 #include <glib.h>
-
-#define MICROSECS 1000
 
 #define BUFSIZE 4096
 #define COMMAND_LEN 256
@@ -68,7 +67,7 @@ typedef struct _pkt_t {
 } pkt_t;
 
 
-enum {critical=1, error, info, debug};
+enum {critical=1, error, warning, info, debug};
 
 // Function declaration
 
